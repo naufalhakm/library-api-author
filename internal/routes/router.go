@@ -2,17 +2,16 @@ package routes
 
 import (
 	"fmt"
-	"library-api-author/internal/commons/response"
 	"library-api-author/internal/factory"
-	"library-api-author/pkg/token"
+	"library-api-author/internal/grpc/client"
+	"library-api-author/internal/middleware"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(provider *factory.Provider) *gin.Engine {
+func RegisterRoutes(provider *factory.Provider, authClient *client.AuthClient) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger(), CORS())
@@ -28,14 +27,14 @@ func RegisterRoutes(provider *factory.Provider) *gin.Engine {
 	{
 		v1 := api.Group("v1")
 		{
-			auth := v1.Group("/authors", CheckAuth())
-			{
-				auth.GET("/", provider.AuthorProvider.GetAllAuthors)
-				auth.POST("/", provider.AuthorProvider.CreateAuthor)
-				auth.GET("/:id", provider.AuthorProvider.GetDetailAuthor)
-				auth.PUT("/:id", provider.AuthorProvider.UpdateAuthor)
-				auth.DELETE("/:id", provider.AuthorProvider.DeleteAuthor)
-			}
+			auth := v1.Use(middleware.CheckAuthIsAdminOrAuthor(authClient))
+			auth.GET("/authors", provider.AuthorProvider.GetAllAuthors)
+			auth.GET("/authors/:id", provider.AuthorProvider.GetDetailAuthor)
+
+			admin := v1.Use(middleware.CheckAuthIsAdmin(authClient))
+			admin.POST("/authors", provider.AuthorProvider.CreateAuthor)
+			admin.PUT("/authors/:id", provider.AuthorProvider.UpdateAuthor)
+			admin.DELETE("/authors/:id", provider.AuthorProvider.DeleteAuthor)
 		}
 	}
 
@@ -51,29 +50,6 @@ func CORS() gin.HandlerFunc {
 		if ctx.Request.Method == "OPTIONS" {
 			ctx.AbortWithStatus(http.StatusNoContent)
 		}
-		ctx.Next()
-	}
-}
-
-func CheckAuth() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		header := ctx.GetHeader("Authorization")
-
-		bearerToken := strings.Split(header, "Bearer ")
-
-		if len(bearerToken) != 2 {
-			resp := response.UnauthorizedErrorWithAdditionalInfo("len token must be 2")
-			ctx.AbortWithStatusJSON(resp.StatusCode, resp)
-			return
-		}
-
-		payload, err := token.ValidateToken(bearerToken[1])
-		if err != nil {
-			resp := response.UnauthorizedErrorWithAdditionalInfo(err.Error())
-			ctx.AbortWithStatusJSON(resp.StatusCode, resp)
-			return
-		}
-		ctx.Set("authId", payload.AuthId)
 		ctx.Next()
 	}
 }

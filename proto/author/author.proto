@@ -15,5 +15,5 @@ message AuthorRequest {
 message AuthorResponse {
   uint64 user_id = 1;
   string name = 2;
-  string bio = 2;
+  string bio = 3;
 }
