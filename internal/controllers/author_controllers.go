@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"library-api-author/internal/commons/params"
+	"library-api-author/internal/commons/response"
 	"library-api-author/internal/models"
-	"library-api-author/internal/response"
+	"library-api-author/internal/params"
 	"library-api-author/internal/services"
 	"net/http"
 	"strconv"
