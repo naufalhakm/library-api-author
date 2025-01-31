@@ -1,9 +1,9 @@
 version: "3.8"
 services:
 
-  goservices:
+  goservices-author:
     build: "."
-    container_name: goservices
+    container_name: goservices-author
     image: naufalhakm/library-api-author:v2
     environment:
       DB_HOST: postgres
