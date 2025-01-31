@@ -4,7 +4,7 @@ services:
   goservices:
     build: "."
     container_name: goservices
-    image: naufalhakm/library-api-author:v1
+    image: naufalhakm/library-api-author:v2
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -14,3 +14,7 @@ services:
     ports:
       - "8083:8083"  # REST API
     restart: always
+networks:
+  default:
+    external:
+      name: nginx-proxy
